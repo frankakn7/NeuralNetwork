@@ -21,6 +21,7 @@ function Ineuron(input){
 
 function neuron(){
 	this.valuesToEvaluate = [];
+	this.beforeSigmoid = 0;
 	this.endValue = 0;
 	
 	this.getValue = function(){
@@ -28,6 +29,7 @@ function neuron(){
 		for(var i = 0; i < this.valuesToEvaluate.length; i++){
 			this.endValue += this.valuesToEvaluate[i];
 		}
+		this.beforeSigmoid = this.endValue;
 		this.endValue = Sigmoid(this.endValue);
 	}
 }
@@ -48,6 +50,25 @@ function forwardPropagation(){
 		for(var j = 0; j < N[i].length; j ++){
 			N[i][j].getValue();
 		}
+	}
+}
+
+function backPopagation(expected){
+	var marginOfError = expected - N[1][0].endValue;
+	var deltaOutputSum = SigmoidDerivative(N[1][0].beforeSigmoid) * marginOfError;
+	var resultsHidden = [];
+	var deltaWeights = [];
+
+	for(var i = 0; i < N[0].length; i++){
+		resultsHidden.push(N[0][i].endValue);
+	}
+	for(var i = 0; i < resultsHidden.length; i++){
+		deltaWeights.push(deltaOutputSum * resultsHidden[i]);
+	}
+	for(var i = 0; i < S[1].length; i++){
+		console.log("Old: "+S[1][i].weight);
+		S[1][i].weight += deltaWeights[i];
+		console.log("New: "+S[1][i].weight);
 	}
 }
 
