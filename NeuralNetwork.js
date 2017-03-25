@@ -1,5 +1,5 @@
-var input = [[1,0],[1,1],[0,1],[0,0]];
-var EOutput = [1,1,1,0];
+var input = [[0,0,0],[0,0,1],[0,1,1],[1,1,1]];
+var EOutput = [0,0,1,1];
 
 var S = [[],[]];
 var N = [[],[]];
@@ -99,18 +99,19 @@ function backpropagation(expected){
 	//console.log("learned")
 }
 
-function think(input1,input2,expected){
+function think(input1,input2,input3){
 	I[0].endValue = input1;
 	I[1].endValue = input2;
+	I[2].endValue = input3;
 
 	forwardPropagation();
-	backpropagation(expected);
 }
 
 function train(times){
 	for(var i = 0; i < times; i++){
 		for(var j = 0; j < EOutput.length; j++){
-			think(input[j][0],input[j][1],EOutput[j]);
+			think(input[j][0],input[j][1],input[j][2]);
+			backpropagation(EOutput[j]);
 		}
 	}
 	console.log("Trained")
@@ -122,20 +123,29 @@ console.log(SigmoidDerivative(1.235));
 */
 I[0] = new Ineuron(1);
 I[1] = new Ineuron(1);
+I[2] = new Ineuron(1);
 
 N[0][0] = new neuron();
 N[0][1] = new neuron();
 N[0][2] = new neuron();
+N[0][3] = new neuron();
 
 N[1][0] = new neuron();
 
 S[0][0] = new synapse(I[0], N[0][0], 0.8);
 S[0][1] = new synapse(I[0], N[0][1], 0.4);
 S[0][2] = new synapse(I[0], N[0][2], 0.3);
-S[0][3] = new synapse(I[1], N[0][0], 0.2);
-S[0][4] = new synapse(I[1], N[0][1], 0.9);
-S[0][5] = new synapse(I[1], N[0][2], 0.5);
+S[0][3] = new synapse(I[0], N[0][3], 0.2);
+S[0][4] = new synapse(I[1], N[0][0], 0.9);
+S[0][5] = new synapse(I[1], N[0][1], 0.5);
+S[0][6] = new synapse(I[1], N[0][2], 0.8);
+S[0][7] = new synapse(I[1], N[0][3], 0.4);
+S[0][8] = new synapse(I[2], N[0][0], 0.3);
+S[0][9] = new synapse(I[2], N[0][1], 0.2);
+S[0][10] = new synapse(I[2], N[0][2], 0.9);
+S[0][11] = new synapse(I[2], N[0][3], 0.5);
 
 S[1][0] = new synapse(N[0][0], N[1][0], 0.3);
 S[1][1] = new synapse(N[0][1], N[1][0], 0.5);
 S[1][2] = new synapse(N[0][2], N[1][0], 0.9);
+S[1][3] = new synapse(N[0][3], N[1][0], 0.9);
