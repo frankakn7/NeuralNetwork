@@ -3,6 +3,7 @@ var EOutput = [1,1,0,0];
 
 var S = [[],[]];
 var N = [[],[]];
+var I = [];
 
 function synapse(from, to, weight){
 	this.from = from;
@@ -10,7 +11,7 @@ function synapse(from, to, weight){
 	this.weight = weight;
 	
 	this.influence = function(){
-		console.log(this);
+		//console.log(this);
 		this.to.valuesToEvaluate.push(from.endValue * this.weight);
 	}
 }
@@ -51,14 +52,16 @@ function forwardPropagation(){
 			N[i][j].getValue();
 		}
 	}
+	console.log("Output: "+N[1][0].endValue);
 }
 
-function backPopagation(expected){
+function backpropagation(expected){
 	var marginOfError = expected - N[1][0].endValue;
 	var deltaOutputSum = SigmoidDerivative(N[1][0].beforeSigmoid) * marginOfError;
+	var deltaHiddenSum = [];
 	var resultsHidden = [];
 	var deltaWeights = [];
-
+	var oldWeightsHiddenOut = [];
 	for(var i = 0; i < N[0].length; i++){
 		resultsHidden.push(N[0][i].endValue);
 	}
@@ -66,9 +69,42 @@ function backPopagation(expected){
 		deltaWeights.push(deltaOutputSum * resultsHidden[i]);
 	}
 	for(var i = 0; i < S[1].length; i++){
+		oldWeightsHiddenOut.push(S[1][i].weight);
 		console.log("Old: "+S[1][i].weight);
 		S[1][i].weight += deltaWeights[i];
 		console.log("New: "+S[1][i].weight);
+	}
+	deltaWeights = [];
+	for(var i = 0; i < oldWeightsHiddenOut.length; i++){
+		deltaHiddenSum.push(deltaOutputSum * oldWeightsHiddenOut[i] * SigmoidDerivative(N[0][i].beforeSigmoid))
+	}
+	for(var i = 0; i < I.length; i++){
+		for(var j = 0; j < deltaHiddenSum.length; j++){
+			deltaWeights.push(deltaHiddenSum[j]*I[i].endValue);
+		}
+	}
+	//console.log(deltaWeights);
+	for(var i = 0; i < S[0].length; i++){
+		console.log("Old: "+S[0][i].weight);
+		S[0][i].weight += deltaWeights[i];
+		console.log("New: "+S[0][i].weight);
+	}
+	console.log("learned")
+}
+
+function think(input1,input2,expected){
+	I[0].endValue = input1;
+	I[1].endValue = input2;
+
+	forwardPropagation();
+	backpropagation(expected);
+}
+
+function train(times){
+	for(var i = 0; i < times; i++){
+		for(var j = 0; j < EOutput.length; j++){
+			think(input[j][0],input[j][1],EOutput[j]);
+		}
 	}
 }
 
@@ -76,8 +112,8 @@ function backPopagation(expected){
 console.log(Sigmoid(1));
 console.log(SigmoidDerivative(1.235));
 */
-var IOne = new Ineuron(1);
-var ITwo = new Ineuron(1);
+I[0] = new Ineuron(1);
+I[1] = new Ineuron(1);
 
 N[0][0] = new neuron();
 N[0][1] = new neuron();
@@ -85,12 +121,12 @@ N[0][2] = new neuron();
 
 N[1][0] = new neuron();
 
-S[0][0] = new synapse(IOne, N[0][0], 0.8);
-S[0][1] = new synapse(IOne, N[0][1], 0.4);
-S[0][2] = new synapse(IOne, N[0][2], 0.3);
-S[0][3] = new synapse(ITwo, N[0][0], 0.2);
-S[0][4] = new synapse(ITwo, N[0][1], 0.9);
-S[0][5] = new synapse(ITwo, N[0][2], 0.5);
+S[0][0] = new synapse(I[0], N[0][0], 0.8);
+S[0][1] = new synapse(I[0], N[0][1], 0.4);
+S[0][2] = new synapse(I[0], N[0][2], 0.3);
+S[0][3] = new synapse(I[1], N[0][0], 0.2);
+S[0][4] = new synapse(I[1], N[0][1], 0.9);
+S[0][5] = new synapse(I[1], N[0][2], 0.5);
 
 S[1][0] = new synapse(N[0][0], N[1][0], 0.3);
 S[1][1] = new synapse(N[0][1], N[1][0], 0.5);
