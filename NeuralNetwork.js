@@ -1,5 +1,5 @@
 var input = [[1,0],[1,1],[0,1],[0,0]];
-var EOutput = [1,1,0,0];
+var EOutput = [1,1,1,0];
 
 var S = [[],[]];
 var N = [[],[]];
@@ -44,6 +44,13 @@ function SigmoidDerivative(x){
 }
 
 function forwardPropagation(){
+
+	for(var i = 0; i < N.length; i++){
+		for(var j = 0; j < N[i].length; j++){
+			N[i][j].valuesToEvaluate = [];
+		}
+	}
+
 	for(var i = 0; i < S.length; i ++){
 		for(var j = 0; j < S[i].length; j ++){
 			S[i][j].influence();
@@ -70,9 +77,9 @@ function backpropagation(expected){
 	}
 	for(var i = 0; i < S[1].length; i++){
 		oldWeightsHiddenOut.push(S[1][i].weight);
-		console.log("Old: "+S[1][i].weight);
+		//console.log("Old: "+S[1][i].weight);
 		S[1][i].weight += deltaWeights[i];
-		console.log("New: "+S[1][i].weight);
+		//console.log("New: "+S[1][i].weight);
 	}
 	deltaWeights = [];
 	for(var i = 0; i < oldWeightsHiddenOut.length; i++){
@@ -85,11 +92,11 @@ function backpropagation(expected){
 	}
 	//console.log(deltaWeights);
 	for(var i = 0; i < S[0].length; i++){
-		console.log("Old: "+S[0][i].weight);
+		//console.log("Old: "+S[0][i].weight);
 		S[0][i].weight += deltaWeights[i];
-		console.log("New: "+S[0][i].weight);
+		//console.log("New: "+S[0][i].weight);
 	}
-	console.log("learned")
+	//console.log("learned")
 }
 
 function think(input1,input2,expected){
@@ -106,6 +113,7 @@ function train(times){
 			think(input[j][0],input[j][1],EOutput[j]);
 		}
 	}
+	console.log("Trained")
 }
 
 /*
