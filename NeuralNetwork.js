@@ -1,13 +1,14 @@
-var input = [[0,0,0],[0,0,1],[0,1,1],[1,1,1]];
-var EOutput = [0,0,1,1];
+var input = [[0,0,0],[0,0,1],[0,1,1],[1,1,1],[1,0,0]];
+var EOutput = [0,0,1,1,0];
 
 var S = [[],[]];
-var N = [[],[]];
+var N = [];
 var I = [];
 
 function synapse(from, to, weight){
 	this.from = from;
 	this.to = to;
+	this.old = 0;
 	this.weight = weight;
 	
 	this.influence = function(){
@@ -32,6 +33,7 @@ function neuron(){
 		}
 		this.beforeSigmoid = this.endValue;
 		this.endValue = Sigmoid(this.endValue);
+		this.valuesToEvaluate = [];
 	}
 }
 
@@ -44,13 +46,6 @@ function SigmoidDerivative(x){
 }
 
 function forwardPropagation(){
-
-	for(var i = 0; i < N.length; i++){
-		for(var j = 0; j < N[i].length; j++){
-			N[i][j].valuesToEvaluate = [];
-		}
-	}
-
 	for(var i = 0; i < S.length; i ++){
 		for(var j = 0; j < S[i].length; j ++){
 			S[i][j].influence();
@@ -59,44 +54,35 @@ function forwardPropagation(){
 			N[i][j].getValue();
 		}
 	}
-	console.log("Output: "+N[1][0].endValue);
+	console.log("Output: "+Math.round(N[N.length-1][0].endValue));
 }
 
 function backpropagation(expected){
-	var marginOfError = expected - N[1][0].endValue;
-	var deltaOutputSum = SigmoidDerivative(N[1][0].beforeSigmoid) * marginOfError;
+	var marginOfError = expected - N[N.length-1][0].endValue;
+	var deltaOutputSum = SigmoidDerivative(N[N.length-1][0].beforeSigmoid) * marginOfError;
+
 	var deltaHiddenSum = [];
-	var resultsHidden = [];
-	var deltaWeights = [];
-	var oldWeightsHiddenOut = [];
-	for(var i = 0; i < N[0].length; i++){
-		resultsHidden.push(N[0][i].endValue);
-	}
-	for(var i = 0; i < resultsHidden.length; i++){
-		deltaWeights.push(deltaOutputSum * resultsHidden[i]);
-	}
-	for(var i = 0; i < S[1].length; i++){
-		oldWeightsHiddenOut.push(S[1][i].weight);
-		//console.log("Old: "+S[1][i].weight);
-		S[1][i].weight += deltaWeights[i];
-		//console.log("New: "+S[1][i].weight);
-	}
-	deltaWeights = [];
-	for(var i = 0; i < oldWeightsHiddenOut.length; i++){
-		deltaHiddenSum.push(deltaOutputSum * oldWeightsHiddenOut[i] * SigmoidDerivative(N[0][i].beforeSigmoid))
+	var deltaWeights = [[]];
+
+	for(var i = 0; i < S[S.length-1].length; i++){
+		deltaHiddenSum.push(deltaOutputSum * S[S.length-1][i].weight * SigmoidDerivative(N[N.length-2][i].beforeSigmoid))
 	}
 	for(var i = 0; i < I.length; i++){
 		for(var j = 0; j < deltaHiddenSum.length; j++){
-			deltaWeights.push(deltaHiddenSum[j]*I[i].endValue);
+			deltaWeights[0].push(deltaHiddenSum[j]*I[i].endValue);
 		}
 	}
-	//console.log(deltaWeights);
-	for(var i = 0; i < S[0].length; i++){
-		//console.log("Old: "+S[0][i].weight);
-		S[0][i].weight += deltaWeights[i];
-		//console.log("New: "+S[0][i].weight);
+	for(var i = 0; i < N.length; i++){
+		deltaWeights.push([]);
+		for(var j = 0; j < N[i].length; j++){
+			deltaWeights[deltaWeights.length-1].push(N[i][j].endValue * deltaOutputSum);
+		}
 	}
-	//console.log("learned")
+	for(var i = 0; i < S.length; i++){
+		for(var j = 0; j < S[i].length; j++){
+			S[i][j].weight += deltaWeights[i][j];
+		}
+	}
 }
 
 function think(input1,input2,input3){
@@ -117,35 +103,34 @@ function train(times){
 	console.log("Trained")
 }
 
-/*
-console.log(Sigmoid(1));
-console.log(SigmoidDerivative(1.235));
-*/
-I[0] = new Ineuron(1);
-I[1] = new Ineuron(1);
-I[2] = new Ineuron(1);
+function generateNetwork(numInput,numHiddenLayer, neuronsPerLayer){
+	for(var i = 0; i < numInput; i++){
+		I[i] = new Ineuron(1);
+	}
+	for(var i = 0; i < numHiddenLayer; i++){
+		N.push([]);
+		for(var j = 0; j < neuronsPerLayer; j++){
+			N[i][j] = new neuron();
+		}
+	}
+	N.push([])
+	N[N.length-1][0] = new neuron();
 
-N[0][0] = new neuron();
-N[0][1] = new neuron();
-N[0][2] = new neuron();
-N[0][3] = new neuron();
+	for(var i = 0; i < I.length; i++){
+		for(var j = 0; j < N[0].length; j++){
+			S[0].push(new synapse(I[i], N[0][j], Math.random()))
+		}
+	}
 
-N[1][0] = new neuron();
+	for(var i = 0; i < N.length; i ++){
+		for(var j = 0; j < N[i].length; j++){
+			if(i < N.length-1){
+				for(var k = 0; k < N[i+1].length; k++){
+					S[i+1].push(new synapse(N[i][j], N[i+1][k],Math.random()));
+				}
+			}
+		}
+	}
+}
 
-S[0][0] = new synapse(I[0], N[0][0], 0.8);
-S[0][1] = new synapse(I[0], N[0][1], 0.4);
-S[0][2] = new synapse(I[0], N[0][2], 0.3);
-S[0][3] = new synapse(I[0], N[0][3], 0.2);
-S[0][4] = new synapse(I[1], N[0][0], 0.9);
-S[0][5] = new synapse(I[1], N[0][1], 0.5);
-S[0][6] = new synapse(I[1], N[0][2], 0.8);
-S[0][7] = new synapse(I[1], N[0][3], 0.4);
-S[0][8] = new synapse(I[2], N[0][0], 0.3);
-S[0][9] = new synapse(I[2], N[0][1], 0.2);
-S[0][10] = new synapse(I[2], N[0][2], 0.9);
-S[0][11] = new synapse(I[2], N[0][3], 0.5);
-
-S[1][0] = new synapse(N[0][0], N[1][0], 0.3);
-S[1][1] = new synapse(N[0][1], N[1][0], 0.5);
-S[1][2] = new synapse(N[0][2], N[1][0], 0.9);
-S[1][3] = new synapse(N[0][3], N[1][0], 0.9);
+generateNetwork(3,1,4);
